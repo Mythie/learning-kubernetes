@@ -42,18 +42,6 @@ resource "aws_iam_role" "eks_worker_role" {
       },
       "Effect": "Allow",
       "Sid": ""
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-          "autoscaling:DescribeAutoScalingGroups",
-          "autoscaling:DescribeAutoScalingInstances",
-          "autoscaling:DescribeLaunchConfigurations",
-          "autoscaling:DescribeTags",
-          "autoscaling:SetDesiredCapacity",
-          "autoscaling:TerminateInstanceInAutoScalingGroup"
-      ],
-      "Resource": "*"
     }
   ]
 }
