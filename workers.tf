@@ -69,6 +69,18 @@ resource "aws_autoscaling_group" "autoscaling_group" {
     propagate_at_launch = true
   }
 
+  tag {
+    key = "k8s.io/cluster-autoscaler/enabled"
+    value = ""
+    propagate_at_launch = false
+  }
+  
+  tag {
+    key = "k8s.io/cluster-autoscaler/${var.cluster-name}"
+    value = ""
+    propagate_at_launch = false
+  }
+
   depends_on = [
     "aws_eks_cluster.kube",
     "aws_launch_template.worker_launch_template"
