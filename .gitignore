@@ -1,3 +1,4 @@
 deployments/
 .terraform/
-.tfstate*
+*.tfstate*
+config-map.yaml

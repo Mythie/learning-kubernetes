@@ -11,77 +11,51 @@ set -o xtrace
 USERDATA
 }
 
-resource "aws_launch_configuration" "worker_launch_config" {
-  associate_public_ip_address = true
-  iam_instance_profile        = "${aws_iam_instance_profile.worker_profile.name}"
-  image_id                    = "${var.ami-id}"
-  instance_type               = "t3.medium"
-  name_prefix                 = "kube-worker"
-  security_groups             = ["${aws_security_group.kube.id}"]
-  user_data_base64            = "${base64encode(local.worker-userdata)}"
-  key_name                    = "${var.key-name}"
+resource "aws_launch_template" "worker_launch_template" {
+  name                   = "worker_launch_template"
+  description            = "Launch template for worker nodes"
+  instance_type          = "t3.medium"
+  image_id               = "${var.ami-id}"
+  vpc_security_group_ids = ["${aws_security_group.kube.id}"]
+  user_data              = "${base64encode(local.worker-userdata)}"
+  key_name               = "${var.key-name}"
 
-  root_block_device {
-    volume_size = 20
-  }
-
-  lifecycle {
-    create_before_destroy = true
+  iam_instance_profile {
+    name = "${aws_iam_instance_profile.worker_profile.name}"
   }
 }
 
-resource "aws_launch_configuration" "spot_worker_launch_config" {
-  associate_public_ip_address = true
-  iam_instance_profile        = "${aws_iam_instance_profile.worker_profile.name}"
-  image_id                    = "${var.ami-id}"
-  instance_type               = "t3.medium"
-  name_prefix                 = "kube-spot-worker"
-  security_groups             = ["${aws_security_group.kube.id}"]
-  user_data_base64            = "${base64encode(local.worker-userdata)}"
-  key_name                    = "${var.key-name}"
-  spot_price                  = "${var.spot-price}"
+resource "aws_autoscaling_group" "autoscaling_group" {
+  name                = "kube-spot-worker"
+  desired_capacity    = 4
+  min_size            = 2
+  max_size            = 20
+  vpc_zone_identifier = ["${aws_subnet.primary.id}", "${aws_subnet.secondary.id}"]
 
-  root_block_device {
-    volume_size = 20
+  mixed_instances_policy {
+    instances_distribution {
+      on_demand_base_capacity = 2
+      on_demand_percentage_above_base_capacity = 0
+    }
+
+    launch_template {
+      launch_template_specification {
+        launch_template_id = "${aws_launch_template.worker_launch_template.id}"
+      }
+
+      override {
+        instance_type = "t3.large"
+      }
+
+      override {
+        instance_type = "m4.large"
+      }
+
+      override {
+        instance_type = "c4.large"
+      }
+    }
   }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-resource "aws_autoscaling_group" "worker_autoscaling_group" {
-  desired_capacity     = 2
-  launch_configuration = "${aws_launch_configuration.worker_launch_config.id}"
-  max_size             = 3
-  min_size             = 1
-  name                 = "kube-basic-worker"
-  vpc_zone_identifier  = ["${aws_subnet.primary.id}", "${aws_subnet.secondary.id}"]
-
-  tag {
-    key                 = "Name"
-    value               = "kube-basic-worker"
-    propagate_at_launch = true
-  }
-
-  tag {
-    key                 = "kubernetes.io/cluster/${var.cluster-name}"
-    value               = "owned"
-    propagate_at_launch = true
-  }
-
-  depends_on = [
-    "aws_eks_cluster.kube",
-    "aws_launch_configuration.worker_launch_config"
-  ]
-}
-resource "aws_autoscaling_group" "spot_worker_autoscaling_group" {
-  desired_capacity     = 2
-  launch_configuration = "${aws_launch_configuration.spot_worker_launch_config.id}"
-  max_size             = 3
-  min_size             = 1
-  name                 = "kube-spot-worker"
-  vpc_zone_identifier  = ["${aws_subnet.primary.id}", "${aws_subnet.secondary.id}"]
 
   tag {
     key                 = "Name"
@@ -97,6 +71,6 @@ resource "aws_autoscaling_group" "spot_worker_autoscaling_group" {
 
   depends_on = [
     "aws_eks_cluster.kube",
-    "aws_launch_configuration.spot_worker_launch_config"
+    "aws_launch_template.worker_launch_template"
   ]
 }

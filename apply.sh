@@ -2,7 +2,7 @@
 
 aws help > /dev/null
 
-if [[ $? != 0]]; then
+if [[ $? != 0 ]]; then
   echo "[FATAL] AWS CLI must be installed to create the cluster"
   exit 1
 fi
