@@ -17,6 +17,10 @@ variable "key-name" {
   default = "erlang"
 }
 
-variable "spot-price" {
-  default = "0.03"
+variable "min-nodes" {
+  default = 4
+}
+
+variable "max-nodes" {
+  default = 20
 }

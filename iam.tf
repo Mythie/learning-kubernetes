@@ -1,5 +1,5 @@
 resource "aws_iam_role" "eks_cluster_role" {
-  name = "eks_cluster_role"
+  name = "${var.cluster-name}_eks_cluster_role"
 
   assume_role_policy = <<EOF
 {
@@ -29,7 +29,7 @@ resource "aws_iam_role_policy_attachment" "cluster-service-policy" {
 }
 
 resource "aws_iam_role" "eks_worker_role" {
-  name = "eks_worker_role"
+  name = "${var.cluster-name}_eks_worker_role"
 
   assume_role_policy = <<EOF
 {
@@ -49,7 +49,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "worker-autoscaling-policy" {
-  name = "worker-autoscaling-policy"
+  name = "${var.cluster-name}-worker-autoscaling-policy"
   role = "${aws_iam_role.eks_worker_role.id}"
 
   policy = <<EOF

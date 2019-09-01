@@ -7,11 +7,12 @@ if [[ $? != 0 ]]; then
   exit 1
 fi
 
-terraform apply
+terraform apply -auto-approve
 
 terraform output config-map > config-map.yaml
+terraform output cluster-autoscaler > cluster-autoscaler.yaml
 
-aws eks update-kubeconfig --name kube
+aws eks update-kubeconfig --name $(terraform output cluster-name)
 
 kubectl apply -f config-map.yaml
 

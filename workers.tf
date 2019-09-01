@@ -1,5 +1,5 @@
 resource "aws_iam_instance_profile" "worker_profile" {
-  name = "aws_worker_profile"
+  name = "${var.cluster-name}_aws_worker_profile"
   role = "${aws_iam_role.eks_worker_role.name}"
 }
 
@@ -12,13 +12,17 @@ USERDATA
 }
 
 resource "aws_launch_template" "worker_launch_template" {
-  name                   = "worker_launch_template"
+  name                   = "${var.cluster-name}_worker_launch_template"
   description            = "Launch template for worker nodes"
   instance_type          = "t3.medium"
   image_id               = "${var.ami-id}"
-  vpc_security_group_ids = ["${aws_security_group.kube.id}"]
+  vpc_security_group_ids = ["${aws_security_group.worker.id}"]
   user_data              = "${base64encode(local.worker-userdata)}"
   key_name               = "${var.key-name}"
+
+  network_interfaces {
+    associate_public_ip_address = true
+  }
 
   iam_instance_profile {
     name = "${aws_iam_instance_profile.worker_profile.name}"
@@ -26,15 +30,15 @@ resource "aws_launch_template" "worker_launch_template" {
 }
 
 resource "aws_autoscaling_group" "autoscaling_group" {
-  name                = "kube-spot-worker"
-  desired_capacity    = 4
-  min_size            = 2
-  max_size            = 20
+  name                = "${var.cluster-name}_kube-spot-worker"
+  desired_capacity    = tonumber("${var.min-nodes}")
+  min_size            = tonumber("${var.min-nodes}")
+  max_size            = tonumber("${var.max-nodes}")
   vpc_zone_identifier = ["${aws_subnet.primary.id}", "${aws_subnet.secondary.id}"]
 
   mixed_instances_policy {
     instances_distribution {
-      on_demand_base_capacity = 2
+      on_demand_base_capacity                  = 2
       on_demand_percentage_above_base_capacity = 0
     }
 
@@ -70,14 +74,14 @@ resource "aws_autoscaling_group" "autoscaling_group" {
   }
 
   tag {
-    key = "k8s.io/cluster-autoscaler/enabled"
-    value = ""
+    key                 = "k8s.io/cluster-autoscaler/enabled"
+    value               = ""
     propagate_at_launch = false
   }
-  
+
   tag {
-    key = "k8s.io/cluster-autoscaler/${var.cluster-name}"
-    value = ""
+    key                 = "k8s.io/cluster-autoscaler/${var.cluster-name}"
+    value               = ""
     propagate_at_launch = false
   }
 
