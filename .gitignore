@@ -1,5 +1,4 @@
 deployments/
 .terraform/
 *.tfstate*
-config-map.yaml
-cluster-autoscaler.yaml
+outputs/
