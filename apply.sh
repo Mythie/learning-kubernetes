@@ -28,7 +28,7 @@ sleep 15
 kubectl get svc && kubectl get nodes
 
 echo "[INFO] Deploying preconfigured deployments from ./deployments folder"
-for file in ./deployments/*.yaml; do
+for file in $(ls ./deployments/*.yaml); do
   echo "[INFO] Applying $file"
   kubectl apply -f $file
 done;
