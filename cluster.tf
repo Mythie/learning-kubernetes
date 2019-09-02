@@ -7,8 +7,8 @@ resource "aws_eks_cluster" "kube" {
   role_arn = "${aws_iam_role.eks_cluster_role.arn}"
 
   vpc_config {
-    subnet_ids         = ["${aws_subnet.primary.id}", "${aws_subnet.secondary.id}"]
-    security_group_ids = ["${aws_security_group.kube.id}"]
+    subnet_ids              = ["${aws_subnet.primary.id}", "${aws_subnet.secondary.id}"]
+    security_group_ids      = ["${aws_security_group.kube.id}"]
     endpoint_private_access = true
   }
 

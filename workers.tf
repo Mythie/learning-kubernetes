@@ -12,16 +12,17 @@ USERDATA
 }
 
 resource "aws_launch_template" "worker_launch_template" {
-  name                   = "${var.cluster-name}_worker_launch_template"
-  description            = "Launch template for worker nodes"
-  instance_type          = "t3.medium"
-  image_id               = "${var.ami-id}"
-  vpc_security_group_ids = ["${aws_security_group.worker.id}"]
-  user_data              = "${base64encode(local.worker-userdata)}"
-  key_name               = "${var.key-name}"
+  name          = "${var.cluster-name}_worker_launch_template"
+  description   = "Launch template for worker nodes"
+  instance_type = "t3.medium"
+  image_id      = "${var.ami-id}"
+  user_data     = "${base64encode(local.worker-userdata)}"
+  key_name      = "${var.key-name}"
 
   network_interfaces {
     associate_public_ip_address = true
+    security_groups             = ["${aws_security_group.worker.id}"]
+    delete_on_termination       = true
   }
 
   iam_instance_profile {
